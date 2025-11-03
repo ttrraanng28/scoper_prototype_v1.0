@@ -1,0 +1,163 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Base styles */
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+  background-attachment: fixed;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+/* Glassmorphism component styles */
+@layer components {
+  .glass-panel {
+    @apply bg-glass-bg backdrop-blur-md border border-glass-border shadow-glass;
+  }
+  
+  .glass-panel-strong {
+    @apply bg-glass-bg-strong backdrop-blur-lg border border-glass-border-strong shadow-glass-lg;
+  }
+  
+  .user-message {
+    @apply bg-user-primary text-user-text shadow-user-message;
+    background: linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%);
+  }
+  
+  .ai-message {
+    @apply bg-ai-bg text-ai-text border border-ai-border shadow-ai-message backdrop-blur-md;
+    transition: all 0.2s ease-in-out;
+  }
+  
+  .ai-message:hover {
+    @apply bg-ai-bg-hover border-glass-border-strong;
+  }
+  
+  .input-glass {
+    @apply bg-glass-bg backdrop-blur-md border border-glass-border text-white placeholder-white/60;
+    @apply focus:outline-none focus:ring-2 focus:ring-white/30 focus:border-glass-border-strong;
+    transition: all 0.2s ease-in-out;
+  }
+  
+  .btn-primary {
+    @apply bg-user-primary hover:bg-user-secondary text-white font-medium;
+    @apply transition-all duration-200 ease-in-out;
+    @apply disabled:bg-user-primary/50 disabled:cursor-not-allowed;
+  }
+  
+  .btn-glass {
+    @apply bg-glass-bg hover:bg-glass-bg-strong backdrop-blur-md border border-glass-border;
+    @apply text-white transition-all duration-200 ease-in-out;
+  }
+}
+
+/* Animation utilities */
+@layer utilities {
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+  
+  .animate-slide-up {
+    animation: slideUp 0.3s ease-out;
+  }
+  
+  .animate-slide-down {
+    animation: slideDown 0.3s ease-out;
+  }
+  
+  .animate-bounce-dots {
+    animation: bounceDots 1.4s ease-in-out infinite both;
+  }
+  
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+
+/* Keyframe animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes bounceDots {
+  0%, 80%, 100% {
+    transform: scale(0);
+  }
+  40% {
+    transform: scale(1);
+  }
+}
+
+/* Scrollbar styling for webkit browsers */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+/* Selection styling */
+::selection {
+  background: rgba(139, 92, 246, 0.3);
+  color: white;
+}
+
+/* Focus visible for accessibility */
+.focus-visible:focus {
+  outline: 2px solid rgba(255, 255, 255, 0.5);
+  outline-offset: 2px;
+}
