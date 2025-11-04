@@ -261,7 +261,7 @@ class ConversationProcessor {
       
       // Call Claude API with system prompt
       const response = await this.anthropic.messages.create({
-        model: 'claude-3-5-sonnet-20241022', // Using the latest available model
+        model: 'claude-sonnet-4-5-20250929', // Using Claude Sonnet 4.5
         max_tokens: 4000,
         system: SystemPromptManager.getPrompt(),
         messages: messages
