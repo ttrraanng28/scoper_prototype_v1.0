@@ -241,7 +241,7 @@ export default {
       return new Response(null, { headers: corsHeaders });
     }
 
-    // Only accept POST for API calls, but allow GET for health checks
+    // Handle GET requests (for browser visits)
     if (request.method === "GET") {
       return new Response(JSON.stringify({ 
         success: true, 
@@ -253,6 +253,7 @@ export default {
       });
     }
 
+    // Only accept POST for API calls
     if (request.method !== "POST") {
       return new Response(JSON.stringify({ 
         success: false, 
@@ -306,6 +307,16 @@ export default {
     ];
 
     try {
+      const requestBody = {
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 4096,
+        system: SYSTEM_PROMPT,
+        messages: messages
+      };
+
+      console.log("Request body size:", JSON.stringify(requestBody).length);
+      console.log("Messages count:", messages.length);
+
       // Call Claude API - DO NOT include CORS headers here!
       const res = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
@@ -314,12 +325,7 @@ export default {
           "anthropic-version": "2023-06-01",
           "content-type": "application/json"
         },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-5-20250929",
-          max_tokens: 4096,
-          system: SYSTEM_PROMPT,  // Now using the system prompt
-          messages: messages      // Now using full conversation history
-        })
+        body: JSON.stringify(requestBody)
       });
 
       const data = await res.json();
