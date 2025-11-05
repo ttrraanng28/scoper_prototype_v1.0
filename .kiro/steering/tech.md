@@ -9,7 +9,7 @@
 ## Backend
 - **Cloudflare Workers** - Serverless edge functions with V8 isolates runtime
 - **Anthropic SDK** (`@anthropic-ai/sdk`) - Official Claude API client
-- **Model**: `claude-sonnet-4-20250514` with embedded system prompt
+- **Model**: `claude-sonnet-4-5-20250929` with embedded system prompt
 
 ## Deployment
 - **Frontend**: GitHub Pages for static site hosting

@@ -21,7 +21,7 @@ const ChatInterface = () => {
   });
 
   // Backend API endpoint - configured for production deployment
-  const API_ENDPOINT = 'https://scoper-backend-prod.trangthu180695.workers.dev/';
+  const API_ENDPOINT = 'https://scoper-backend-prod.trangthu180695.workers.dev';
 
   // Function to detect layer transitions and business context in AI responses
   const analyzeAIResponse = (responseContent) => {

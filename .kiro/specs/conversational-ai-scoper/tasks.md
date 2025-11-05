@@ -23,7 +23,7 @@
   - [x] 2.3 Implement Anthropic Claude API integration
     - Install @anthropic-ai/sdk dependency
     - Create ConversationProcessor class for API communication
-    - Configure claude-sonnet-4-20250514 model with system prompt
+    - Configure claude-sonnet-4-5-20250929 model with system prompt
     - Add conversation context management and response processing
     - _Requirements: 5.1, 5.2, 1.5_
 

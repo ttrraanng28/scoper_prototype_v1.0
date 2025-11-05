@@ -71,7 +71,7 @@ The Conversational AI Scoper System is a sophisticated business consultation too
 #### Acceptance Criteria
 
 1. THE AI Backend SHALL authenticate with Anthropic Claude API using securely stored environment variables
-2. THE AI Backend SHALL use the claude-sonnet-4-20250514 model for response generation
+2. THE AI Backend SHALL use the claude-sonnet-4-5-20250929 model for response generation
 3. THE AI Backend SHALL implement CORS headers to enable frontend access from authorized domains
 4. THE AI Backend SHALL handle API rate limiting and error responses gracefully
 5. THE AI Backend SHALL process conversation context and return structured JSON responses

@@ -189,7 +189,7 @@ interface ChatResponse {
 #### Backend to Claude API
 ```typescript
 interface ClaudeRequest {
-  model: 'claude-sonnet-4-20250514';
+  model: 'claude-sonnet-4-5-20250929';
   max_tokens: number;
   messages: ClaudeMessage[];
   system: string; // Complete Scoper system prompt embedded in Worker

@@ -15,11 +15,11 @@ vars = { ENVIRONMENT = "production" }
 name = "scoper-backend-dev"
 vars = { ENVIRONMENT = "development" }
 
-# API key should be set using: wrangler secret put ANTHROPIC_API_KEY
-# For production: wrangler secret put ANTHROPIC_API_KEY --env production
-# For development: wrangler secret put ANTHROPIC_API_KEY --env development
+# API key should be set using: npx wrangler secret put ANTHROPIC_API_KEY
+# For production: npx wrangler secret put ANTHROPIC_API_KEY --env production
+# For development: npx wrangler secret put ANTHROPIC_API_KEY --env development
 # This ensures the key is stored securely and not in version control
 
 # Deployment commands:
-# Development: wrangler deploy --env development
-# Production: wrangler deploy --env production
+# Development: npx wrangler deploy --env development
+# Production: npx wrangler deploy --env production

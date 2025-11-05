@@ -5,7 +5,9 @@
   "main": "src/index.js",
   "scripts": {
     "dev": "wrangler dev",
-    "deploy": "wrangler deploy"
+    "deploy": "wrangler deploy --env=\"\"",
+    "deploy:dev": "wrangler deploy --env development",
+    "deploy:prod": "wrangler deploy --env production"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.24.3"

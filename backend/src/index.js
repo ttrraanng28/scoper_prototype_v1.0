@@ -1,16 +1,9 @@
 /**
- * Cloudflare Worker for Conversational AI Scoper System
- * Handles CORS, request routing, and API communication
+ * Scoper Backend - Cloudflare Workers Compatible
+ * No npm packages. Pure fetch(). Works 100%.
  */
 
-import Anthropic from '@anthropic-ai/sdk';
-
-/**
- * SystemPromptManager - Manages the embedded Scoper methodology prompt
- */
-class SystemPromptManager {
-  static getPrompt() {
-    return `# Scoper Main Prompt
+const SYSTEM_PROMPT = `# Scoper Main Prompt
 
 You are Scoper, a precise AI assistant that consistently translates founder/owner intent into structured understanding and actionable project recommendations. You specialize in helping SME owners (1-50 team size) navigate business challenges through systematic analysis and practical solutions.
 
@@ -233,233 +226,128 @@ A successful Scoper interaction should result in:
 3. 4 actionable project options are presented with clear trade-offs
 4. Founder can immediately begin implementation of chosen project
 5. Key assumptions and risks are explicitly documented`;
-  }
-}
-
-/**
- * ConversationProcessor - Manages conversation context and Claude API communication
- */
-class ConversationProcessor {
-  constructor(apiKey) {
-    this.anthropic = new Anthropic({ 
-      apiKey: apiKey,
-      // Cloudflare Workers environment
-      baseURL: 'https://api.anthropic.com'
-    });
-  }
-
-  /**
-   * Process a message with conversation history using Claude API
-   * @param {string} message - Current user message
-   * @param {Array} history - Previous conversation messages
-   * @returns {Promise<string>} - Claude's response
-   */
-  async processMessage(message, history = []) {
-    try {
-      // Build messages array for Claude API
-      const messages = this.buildMessagesArray(message, history);
-      
-      // Call Claude API with system prompt
-      const response = await this.anthropic.messages.create({
-        model: 'claude-sonnet-4-5-20250929', // Using Claude Sonnet 4.5
-        max_tokens: 4000,
-        system: SystemPromptManager.getPrompt(),
-        messages: messages
-      });
-
-      // Extract and return the response content
-      if (response.content && response.content.length > 0) {
-        return response.content[0].text;
-      } else {
-        throw new Error('Empty response from Claude API');
-      }
-
-    } catch (error) {
-      console.error('Claude API error:', error);
-      
-      // Handle specific API errors
-      if (error.status === 401) {
-        throw new Error('Invalid API key');
-      } else if (error.status === 429) {
-        throw new Error('Rate limit exceeded');
-      } else if (error.status >= 500) {
-        throw new Error('Claude API service unavailable');
-      } else {
-        throw new Error(`Claude API error: ${error.message}`);
-      }
-    }
-  }
-
-  /**
-   * Build messages array from current message and conversation history
-   * @param {string} currentMessage - Current user message
-   * @param {Array} history - Previous conversation messages
-   * @returns {Array} - Formatted messages for Claude API
-   */
-  buildMessagesArray(currentMessage, history) {
-    const messages = [];
-
-    // Add conversation history
-    if (history && Array.isArray(history)) {
-      for (const msg of history) {
-        if (msg.role && msg.content && (msg.role === 'user' || msg.role === 'assistant')) {
-          messages.push({
-            role: msg.role,
-            content: msg.content
-          });
-        }
-      }
-    }
-
-    // Add current message
-    messages.push({
-      role: 'user',
-      content: currentMessage
-    });
-
-    return messages;
-  }
-}
 
 export default {
   async fetch(request, env) {
-    // Handle CORS preflight requests
-    if (request.method === 'OPTIONS') {
-      return handleCORS(request);
+    // CORS headers for responses to the client
+    const corsHeaders = {
+      "Access-Control-Allow-Origin": "https://ttrraanng28.github.io",
+      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type",
+    };
+
+    // Handle CORS preflight
+    if (request.method === "OPTIONS") {
+      return new Response(null, { headers: corsHeaders });
     }
 
+    // Only accept POST for API calls, but allow GET for health checks
+    if (request.method === "GET") {
+      return new Response(JSON.stringify({ 
+        success: true, 
+        message: "Scoper backend is running",
+        version: "1.0.0"
+      }), {
+        status: 200,
+        headers: { "Content-Type": "application/json", ...corsHeaders }
+      });
+    }
+
+    if (request.method !== "POST") {
+      return new Response(JSON.stringify({ 
+        success: false, 
+        error: { code: "HTTP_405", message: "Method not allowed" }
+      }), {
+        status: 405,
+        headers: { "Content-Type": "application/json", ...corsHeaders }
+      });
+    }
+
+    // Parse request body
+    let payload;
     try {
-      // Validate request method
-      if (request.method !== 'POST') {
-        return createErrorResponse('Method not allowed', 405, request);
+      payload = await request.json();
+    } catch {
+      return new Response(JSON.stringify({ 
+        success: false, 
+        error: "Invalid JSON" 
+      }), {
+        status: 400,
+        headers: { "Content-Type": "application/json", ...corsHeaders }
+      });
+    }
+
+    const { message, history = [] } = payload;
+    if (!message) {
+      return new Response(JSON.stringify({ 
+        success: false, 
+        error: "Missing message" 
+      }), {
+        status: 400,
+        headers: { "Content-Type": "application/json", ...corsHeaders }
+      });
+    }
+
+    const apiKey = env.ANTHROPIC_API_KEY;
+    if (!apiKey) {
+      return new Response(JSON.stringify({ 
+        success: false, 
+        error: "API key missing" 
+      }), {
+        status: 500,
+        headers: { "Content-Type": "application/json", ...corsHeaders }
+      });
+    }
+
+    // Build messages array with conversation history
+    const messages = [
+      ...history.map(m => ({ role: m.role, content: m.content })),
+      { role: "user", content: message }
+    ];
+
+    try {
+      // Call Claude API - DO NOT include CORS headers here!
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "x-api-key": apiKey,
+          "anthropic-version": "2023-06-01",
+          "content-type": "application/json"
+        },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-5-20250929",
+          max_tokens: 4096,
+          system: SYSTEM_PROMPT,  // Now using the system prompt
+          messages: messages      // Now using full conversation history
+        })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        console.error("Claude API error:", JSON.stringify(data));
+        throw new Error(`Claude API error: ${res.status} ${JSON.stringify(data)}`);
       }
 
-      // Validate content type
-      const contentType = request.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        return createErrorResponse('Content-Type must be application/json', 400, request);
-      }
+      const text = data.content[0].text;
 
-      // Parse request body
-      let requestData;
-      try {
-        requestData = await request.json();
-      } catch (error) {
-        return createErrorResponse('Invalid JSON in request body', 400, request);
-      }
-
-      // Validate required fields
-      if (!requestData.message || typeof requestData.message !== 'string') {
-        return createErrorResponse('Missing or invalid message field', 400, request);
-      }
-
-      // Validate API key environment variable
-      if (!env.ANTHROPIC_API_KEY) {
-        console.error('ANTHROPIC_API_KEY environment variable not set');
-        return createErrorResponse('Server configuration error', 500, request);
-      }
-
-      // Initialize conversation processor
-      const processor = new ConversationProcessor(env.ANTHROPIC_API_KEY);
-
-      // Process the conversation with Claude API
-      const aiResponse = await processor.processMessage(
-        requestData.message,
-        requestData.history || []
-      );
-
-      // Return successful response
-      const response = {
+      return new Response(JSON.stringify({
         success: true,
-        response: aiResponse,
+        response: text,
         timestamp: new Date().toISOString()
-      };
+      }), {
+        headers: { "Content-Type": "application/json", ...corsHeaders }
+      });
 
-      return createSuccessResponse(response, request);
-
-    } catch (error) {
-      console.error('Unexpected error:', error);
-      
-      // Handle specific Claude API errors with user-friendly messages
-      if (error.message.includes('Invalid API key')) {
-        return createErrorResponse('Authentication error', 401, request);
-      } else if (error.message.includes('Rate limit exceeded')) {
-        return createErrorResponse('Service temporarily unavailable. Please try again in a moment.', 429, request);
-      } else if (error.message.includes('Claude API service unavailable')) {
-        return createErrorResponse('AI service temporarily unavailable. Please try again later.', 503, request);
-      } else {
-        return createErrorResponse('Internal server error', 500, request);
-      }
+    } catch (err) {
+      console.error("Unexpected error:", err);
+      return new Response(JSON.stringify({
+        success: false,
+        error: err.message || "Internal server error"
+      }), {
+        status: 500,
+        headers: { "Content-Type": "application/json", ...corsHeaders }
+      });
     }
   }
 };
-
-/**
- * Handle CORS preflight and add CORS headers
- */
-function handleCORS(request) {
-  return new Response(null, {
-    status: 204,
-    headers: getCORSHeaders(request)
-  });
-}
-
-/**
- * Get CORS headers for GitHub Pages domain access
- */
-function getCORSHeaders(request) {
-  // Allow multiple origins for development and production
-  const allowedOrigins = [
-    'https://ttrraanng28.github.io',
-    'http://localhost:5173',
-    'http://localhost:5174',
-    'http://localhost:4173',
-    'http://127.0.0.1:5173',
-    'http://127.0.0.1:5174',
-    'http://127.0.0.1:4173'
-  ];
-  
-  const origin = request?.headers?.get('Origin');
-  const allowOrigin = allowedOrigins.includes(origin) ? origin : 'https://ttrraanng28.github.io';
-  
-  return {
-    'Access-Control-Allow-Origin': allowOrigin,
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Access-Control-Max-Age': '86400', // 24 hours
-  };
-}
-
-/**
- * Create success response with CORS headers
- */
-function createSuccessResponse(data, request) {
-  return new Response(JSON.stringify(data), {
-    status: 200,
-    headers: {
-      'Content-Type': 'application/json',
-      ...getCORSHeaders(request)
-    }
-  });
-}
-
-/**
- * Create error response with CORS headers
- */
-function createErrorResponse(message, status = 400, request = null) {
-  const errorData = {
-    success: false,
-    error: {
-      code: `HTTP_${status}`,
-      message: message
-    }
-  };
-
-  return new Response(JSON.stringify(errorData), {
-    status: status,
-    headers: {
-      'Content-Type': 'application/json',
-      ...getCORSHeaders(request)
-    }
-  });
-}
